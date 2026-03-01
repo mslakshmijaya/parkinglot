@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface ParkingTransactionRepository extends JpaRepository<ParkingTransaction,Long> {
-   public Optional<ParkingTransaction> findByTicketNumber(String ticketId);
+   public Optional<ParkingTransaction> findByTicketId(String ticketId);
 }

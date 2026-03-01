@@ -1,11 +1,16 @@
 package com.airtribe.parkinglot.service;
 
 import com.airtribe.parkinglot.dto.EntryTicketDTO;
+import com.airtribe.parkinglot.dto.ExitTicketDTO;
 import com.airtribe.parkinglot.entity.ParkingSpot;
 import com.airtribe.parkinglot.entity.ParkingTransaction;
+import com.airtribe.parkinglot.entity.Vehicle;
 import com.airtribe.parkinglot.exception.ParkingSlotNotFoundException;
+import com.airtribe.parkinglot.exception.ParkingTransactionNotFoundException;
 import com.airtribe.parkinglot.repository.ParkingTransactionRepository;
+import com.airtribe.parkinglot.util.FeeCalculator;
 import com.airtribe.parkinglot.util.IDGenerator;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +22,11 @@ import java.util.Optional;
 public class ParkingTransactionService {
     @Autowired
     private ParkingTransactionRepository parkingTransactionRepository;
+    @Autowired
+    private ParkingSpotService parkingSpotService;
 
-    public ParkingTransaction save(ParkingTransaction parkingTransaction){
+    @Transactional
+    public EntryTicketDTO checkinVehicle(Vehicle vehicle)throws ParkingSlotNotFoundException{
 
         ParkingSpot spot = parkingSpotService.findByIsOccupiedFalse()
                 .stream()
@@ -41,10 +49,8 @@ public class ParkingTransactionService {
         transaction.setVehicle(vehicle);
         transaction.setParkingSpot(spot);
         transaction.setEntryTime(LocalDateTime.now());
+        transaction=   parkingTransactionRepository.save(transaction);
 
-        transaction = parkingTransactionService.save(transaction);
-
-        // Build DTO response
         return new EntryTicketDTO(
                 transaction.getTicketId(),
                 vehicle.getLicensePlate(),
@@ -53,12 +59,47 @@ public class ParkingTransactionService {
                 spot.getFloor(),
                 transaction.getEntryTime()
         );
-
-
-      return  parkingTransactionRepository.save(parkingTransaction);
     }
-    public Optional<ParkingTransaction> findByTicketNumber(String ticketId){
-       return parkingTransactionRepository.findByTicketNumber(ticketId);
+    public Optional<ParkingTransaction> findByTicketId(String ticketId){
+       return parkingTransactionRepository.findByTicketId(ticketId);
+    }
+@Transactional
+    public ExitTicketDTO checkoutVehicle(String ticketId)throws ParkingTransactionNotFoundException {
+        // Find transaction
+        ParkingTransaction transaction = findByTicketId(ticketId)
+                .orElseThrow(() -> new ParkingTransactionNotFoundException(
+                        "No active transaction found for ticket Id " + ticketId));
+
+        ParkingSpot spot = transaction.getParkingSpot();
+
+        // Free the spot
+        spot.setOccupied(false);
+        parkingSpotService.save(spot);
+
+        // Record exit time
+        LocalDateTime exitTime = LocalDateTime.now();
+        transaction.setExitTime(exitTime);
+
+        // Calculate fee using FeeCalculator
+        double fee = FeeCalculator.calculateFee(
+                transaction.getEntryTime(),
+                transaction.getExitTime(),
+                transaction.getVehicle().getVehicleSize()
+        );
+        transaction.setFee(fee);
+
+        transaction = parkingTransactionRepository.save(transaction);
+
+        // Build DTO response
+        return new ExitTicketDTO(
+                transaction.getTicketId(),
+                transaction.getVehicle().getLicensePlate(),
+                spot.getSpotNumber(),
+                spot.getFloor(),
+                transaction.getEntryTime(),
+                transaction.getExitTime(),
+                transaction.getFee()
+        );
     }
 
 }
