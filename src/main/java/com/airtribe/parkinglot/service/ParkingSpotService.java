@@ -73,4 +73,6 @@ public class ParkingSpotService {
     {
         return parkingSpotRepository.findByIsOccupiedFalse();
     }
+
+
 }
