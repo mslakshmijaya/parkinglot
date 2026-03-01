@@ -5,6 +5,7 @@ import com.airtribe.parkinglot.dto.ExitTicketDTO;
 import com.airtribe.parkinglot.entity.ParkingSpot;
 import com.airtribe.parkinglot.entity.ParkingTransaction;
 import com.airtribe.parkinglot.entity.Vehicle;
+import com.airtribe.parkinglot.exception.DuplicateCheckinException;
 import com.airtribe.parkinglot.exception.ParkingSlotNotFoundException;
 import com.airtribe.parkinglot.exception.ParkingTransactionNotFoundException;
 import com.airtribe.parkinglot.service.ParkingSpotService;
@@ -27,14 +28,13 @@ public class ParkingTransactionController {
     private ParkingSpotService parkingSpotService;
 @Transactional
 @PostMapping("/checkin")
-    public EntryTicketDTO checkinVehicle(@RequestBody Vehicle vehicle) throws ParkingSlotNotFoundException
-    {
+    public EntryTicketDTO checkinVehicle(@RequestBody Vehicle vehicle) throws ParkingSlotNotFoundException, DuplicateCheckinException {
         return  parkingTransactionService.checkinVehicle(vehicle);
     }
 
     @Transactional
     @GetMapping("/checkout")
-    public ExitTicketDTO checkOut(String ticketId) throws ParkingTransactionNotFoundException {
+    public ExitTicketDTO checkOut(@RequestParam String ticketId) throws ParkingTransactionNotFoundException {
         return  parkingTransactionService.checkoutVehicle(ticketId);
     }
 

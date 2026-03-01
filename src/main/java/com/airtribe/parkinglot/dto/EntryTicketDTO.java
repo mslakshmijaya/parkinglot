@@ -11,14 +11,23 @@ public class EntryTicketDTO {
     private String spotNumber;
     private int floor;
     private LocalDateTime entryTime;
-
-    public EntryTicketDTO(String ticketId, String licensePlate, SizeCategoryEnums spotSize, String spotNumber, int floor, LocalDateTime entryTime) {
+private SizeCategoryEnums vechicleSize;
+    public EntryTicketDTO(String ticketId, String licensePlate,SizeCategoryEnums vechicleSize, SizeCategoryEnums spotSize, String spotNumber, int floor, LocalDateTime entryTime) {
         this.ticketId = ticketId;
         this.licensePlate = licensePlate;
+        this.vechicleSize = vechicleSize;
         this.spotSize = spotSize;
         this.floor = floor;
         this.entryTime = entryTime;
         this.spotNumber=spotNumber;
+    }
+
+    public SizeCategoryEnums getVechicleSize() {
+        return vechicleSize;
+    }
+
+    public void setVechicleSize(SizeCategoryEnums vechicleSize) {
+        this.vechicleSize = vechicleSize;
     }
 
     public String getTicketId() {

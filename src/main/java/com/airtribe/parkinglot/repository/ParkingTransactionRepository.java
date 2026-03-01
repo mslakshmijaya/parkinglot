@@ -9,4 +9,7 @@ import java.util.Optional;
 @Repository
 public interface ParkingTransactionRepository extends JpaRepository<ParkingTransaction,Long> {
    public Optional<ParkingTransaction> findByTicketId(String ticketId);
+    boolean existsByVehicle_LicensePlateAndExitTimeIsNull(String licensePlate);
+
+
 }

@@ -5,6 +5,7 @@ import com.airtribe.parkinglot.dto.ExitTicketDTO;
 import com.airtribe.parkinglot.entity.ParkingSpot;
 import com.airtribe.parkinglot.entity.ParkingTransaction;
 import com.airtribe.parkinglot.entity.Vehicle;
+import com.airtribe.parkinglot.exception.DuplicateCheckinException;
 import com.airtribe.parkinglot.exception.ParkingSlotNotFoundException;
 import com.airtribe.parkinglot.exception.ParkingTransactionNotFoundException;
 import com.airtribe.parkinglot.repository.ParkingTransactionRepository;
@@ -26,7 +27,17 @@ public class ParkingTransactionService {
     private ParkingSpotService parkingSpotService;
 
     @Transactional
-    public EntryTicketDTO checkinVehicle(Vehicle vehicle)throws ParkingSlotNotFoundException{
+    public EntryTicketDTO checkinVehicle(Vehicle vehicle) throws ParkingSlotNotFoundException, DuplicateCheckinException {
+
+
+        boolean alreadyParked = parkingTransactionRepository
+                .existsByVehicle_LicensePlateAndExitTimeIsNull(vehicle.getLicensePlate());
+
+        if (alreadyParked) {
+            throw new DuplicateCheckinException(
+                    "Vehicle " + vehicle.getLicensePlate() + " is already checked in and has not checked out yet.");
+        }
+
 
         ParkingSpot spot = parkingSpotService.findByIsOccupiedFalse()
                 .stream()
@@ -55,6 +66,7 @@ public class ParkingTransactionService {
                 transaction.getTicketId(),
                 vehicle.getLicensePlate(),
                 vehicle.getVehicleSize(),
+                spot.getSpotSize(),
                 spot.getSpotNumber(),
                 spot.getFloor(),
                 transaction.getEntryTime()
